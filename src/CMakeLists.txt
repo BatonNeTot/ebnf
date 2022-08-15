@@ -1,0 +1,5 @@
+﻿cmake_minimum_required (VERSION 3.8)
+
+file(GLOB_RECURSE EBNF_SOURCES CONFIGURE_DEPENDS *.cpp *.h)
+message ("${EBNF_SOURCES}")
+set(EBNF_SOURCES "${EBNF_SOURCES}" PARENT_SCOPE)
