@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <stack>
 #include <memory>
 
 namespace ebnf {
@@ -94,7 +95,9 @@ namespace ebnf {
 
 			virtual std::string toStr() const = 0;
 
-			virtual std::string generate(const Ebnf& ebnf) const = 0;
+			virtual void generate(const Ebnf& ebnf, std::string& output, std::stack<Node*>& stack) const = 0;
+
+			virtual size_t generationWeight() const { return 1; }
 
 			virtual std::pair<bool, Token> tryParse(const Ebnf& ebnf, std::string_view& str) const = 0;
 		protected:

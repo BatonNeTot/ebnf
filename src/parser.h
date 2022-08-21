@@ -32,9 +32,14 @@ namespace ebnf {
 				return _id;
 			}
 
-			std::string generate(const Ebnf& ebnf) const override {
+			void generate(const Ebnf& ebnf, std::string& output, std::stack<Node*>& stack) const override {
 				auto* node = getById(ebnf, _id);
-				return node != nullptr ? node->generate(ebnf) : _id;
+				if (node == nullptr) {
+					output += _id;
+					return;
+				}
+
+				stack.emplace(node);
 			}
 
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
@@ -42,7 +47,7 @@ namespace ebnf {
 				if (node != nullptr) {
 					auto pair = node->tryParse(ebnf, str);
 					if (!pair.first) {
-						return std::move(pair);
+						return pair;
 					}
 					Ebnf::Token token;
 					token.id = _id;
@@ -72,8 +77,8 @@ namespace ebnf {
 				return '\'' + _value + '\'';
 			}
 
-			std::string generate(const Ebnf&) const override {
-				return _value;
+			void generate(const Ebnf&, std::string& output, std::stack<Node*>&) const override {
+				output += _value;
 			}
 
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
@@ -146,17 +151,15 @@ namespace ebnf {
 				return NodeContainer::toStr(' ');
 			}
 
-			std::string generate(const Ebnf& ebnf) const override {
+			void generate(const Ebnf&, std::string&, std::stack<Node*>& stack) const override {
 				if (children().empty()) {
 					// TODO error!
-					return "";
+					return;
 				}
 
-				auto str = children().front()->generate(ebnf);
-				for (auto i = 1u; i < children().size(); ++i) {
-					str += children()[i]->generate(ebnf);
+				for (size_t i = children().size() - 1; i != std::numeric_limits<size_t>::max(); --i) {
+					stack.emplace(children()[i]);
 				}
-				return str;
 			}
 
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
@@ -180,14 +183,31 @@ namespace ebnf {
 				return NodeContainer::toStr('|');
 			}
 
-			std::string generate(const Ebnf& ebnf) const override {
+			void generate(const Ebnf&, std::string&, std::stack<Node*>& stack) const override {
 				if (children().empty()) {
 					// TODO error!
-					return "";
+					return;
 				}
 
-				auto index = rand() % children().size();
-				return children()[index]->generate(ebnf);
+				size_t randValue = static_cast<size_t>(rand()) % generationWeight();
+				size_t totalWeight = 0;
+				
+				for (auto& child : children()) {
+					if (randValue <= totalWeight) {
+						stack.emplace(child);
+						return;
+					}
+
+					totalWeight += child->generationWeight();
+				}
+			}
+
+			size_t generationWeight() const override {
+				size_t totalWeight = 0;
+				for (auto& child : children()) {
+					totalWeight += child->generationWeight();
+				}
+				return totalWeight;
 			}
 
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
@@ -255,8 +275,10 @@ namespace ebnf {
 				return NodeSingle::toStr('(', ')');
 			}
 
-			std::string generate(const Ebnf& ebnf) const override {
-				return value()->generate(ebnf);
+			void generate(const Ebnf&, std::string&, std::stack<Node*>& stack) const override {
+				if (value()) {
+					stack.emplace(value());
+				}
 			}
 
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
@@ -274,9 +296,11 @@ namespace ebnf {
 				return NodeSingle::toStr('[', ']');
 			}
 
-			std::string generate(const Ebnf& ebnf) const override {
+			void generate(const Ebnf&, std::string&, std::stack<Node*>& stack) const override {
 				const auto toBeOrNotToBe = rand() % 2;
-				return toBeOrNotToBe > 0 ? value()->generate(ebnf) : "";
+				if (toBeOrNotToBe) {
+					stack.emplace(value());
+				}
 			}
 
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
@@ -300,13 +324,11 @@ namespace ebnf {
 				return NodeSingle::toStr('{', '}');
 			}
 
-			std::string generate(const Ebnf& ebnf) const override {
-				std::string str;
+			void generate(const Ebnf&, std::string&, std::stack<Node*>& stack) const override {
 				const auto count = rand() % 10;
 				for (auto i = 0; i < count; ++i) {
-					str += value()->generate(ebnf);
+					stack.emplace(value());
 				}
-				return str;
 			}
 
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {

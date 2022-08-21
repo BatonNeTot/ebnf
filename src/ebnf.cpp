@@ -15,8 +15,23 @@ namespace ebnf {
 	}
 
 	std::string Ebnf::generateFor(const std::string& id) const {
-		auto* node = getById(id);
-		return node != nullptr ? node->generate(*this) : id;
+		auto* root = getById(id);
+		if (root == nullptr) {
+			return id;
+		}
+
+		std::string output;
+		std::stack<Node*> stack;
+
+		stack.emplace(root);
+
+		while (!stack.empty()) {
+			auto* node = stack.top();
+			stack.pop();
+			node->generate(*this, output, stack);
+		}
+
+		return output;
 	}
 
 	std::pair<bool, Ebnf::Token> Ebnf::parseAs(const std::string& str, const std::string& id) const {
