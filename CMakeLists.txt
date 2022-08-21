@@ -35,7 +35,7 @@ target_include_directories(ebnf PRIVATE "src")
 add_subdirectory ("tests")
 
 add_executable (ebnf_test ${EBNF_TEST_SOURCES})
-set_property(TARGET ebnf_testebnf_test PROPERTY CXX_STANDARD 20)
+set_property(TARGET ebnf_test PROPERTY CXX_STANDARD 20)
 
 add_dependencies(ebnf_test ebnf)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ebnf_test)
