@@ -34,16 +34,16 @@ target_include_directories(ebnf PRIVATE "src")
 
 add_subdirectory ("tests")
 
-add_executable (test ${EBNF_TEST_SOURCES})
-set_property(TARGET test PROPERTY CXX_STANDARD 20)
+add_executable (ebnf_test ${EBNF_TEST_SOURCES})
+set_property(TARGET ebnf_testebnf_test PROPERTY CXX_STANDARD 20)
 
-add_dependencies(test ebnf)
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT test)
+add_dependencies(ebnf_test ebnf)
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ebnf_test)
 
-target_compile_definitions(test PRIVATE _AMD64_)
+target_compile_definitions(ebnf_test PRIVATE _AMD64_)
     
-target_link_directories(test PRIVATE "lib")
-target_link_libraries(test ebnf)
-target_include_directories(test PUBLIC "include")
-target_include_directories(test PRIVATE "src")
-target_include_directories(test PRIVATE "tests")
+target_link_directories(ebnf_test PRIVATE "lib")
+target_link_libraries(ebnf_test ebnf)
+target_include_directories(ebnf_test PUBLIC "include")
+target_include_directories(ebnf_test PRIVATE "src")
+target_include_directories(ebnf_test PRIVATE "tests")
