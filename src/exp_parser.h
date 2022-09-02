@@ -91,13 +91,6 @@ namespace ebnf {
 					}
 				}
 
-				if (str.length() >= _id.length() && _id == str.substr(0, _id.length())) {
-					str = str.substr(_id.length());
-					return std::make_pair<bool, Ebnf::Token>(true, { _id, _id });
-				}
-				else {
-					return std::make_pair<bool, Ebnf::Token>(false, { line, offset });
-				}
 				std::pair<bool, Ebnf::Token> pair;
 				if (str.length() >= _id.length() && _id == str.substr(0, _id.length())) {
 					str = str.substr(_id.length());
@@ -248,9 +241,15 @@ namespace ebnf {
 			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
 				Ebnf::Token token(line, offset);
 
+				auto backUpStr = str;
+				auto backUpLine = line;
+				auto backUpOffset = offset;
 				for (auto& child : children()) {
 					auto pair = child->tryParse(ebnf, str, line, offset);
 					if (!pair.first) {
+						str = backUpStr;
+						line = backUpLine;
+						offset = backUpOffset;
 						return pair;
 					}
 					if (!pair.second.value.empty() || !pair.second.parts.empty()) {
@@ -409,10 +408,8 @@ namespace ebnf {
 					return std::make_pair<bool, Ebnf::Token>(true, { line, offset });
 				}
 
-				auto testStr = str;
-				auto pair = value()->tryParse(ebnf, testStr, line, offset);
+				auto pair = value()->tryParse(ebnf, str, line, offset);
 				if (pair.first) {
-					str = testStr;
 					return pair;
 				}
 				return std::make_pair<bool, Ebnf::Token>(true, { line, offset });
@@ -439,11 +436,9 @@ namespace ebnf {
 					return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
 				}
 
-				auto testStr = str;
 				while (true) {
-					auto pair = value()->tryParse(ebnf, testStr, line, offset);
+					auto pair = value()->tryParse(ebnf, str, line, offset);
 					if (pair.first) {
-						str = testStr;
 						token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
 					}
 					else {
