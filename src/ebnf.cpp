@@ -8,7 +8,7 @@ namespace ebnf {
 		Parser parser(source);
 
 		while (parser.hasNext()) {
-			auto info = std::move(parser.proceedNext());
+			auto info = parser.proceedNext();
 			auto id = info.id;
 			_ids.try_emplace(id, std::move(info));
 		}
@@ -46,16 +46,23 @@ namespace ebnf {
 		}
 
 		auto strView = std::string_view(str);
-		auto pair = std::move(node->tryParse(*this, strView));
+		auto pair = node->tryParse(*this, strView);
 		if (!pair.first || !strView.empty()) {
 			return std::make_pair<bool, Ebnf::Token>(false, {});
 		}
 
-		Ebnf::Token token;
-		token.id = id;
-		token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
+		if (!pair.second.id.empty()) {
+			Ebnf::Token token;
+			token.id = id;
+			token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
 
-		return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
+			return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
+		}
+		else {
+			pair.second.id = id;
+
+			return pair;
+		}
 	}
 
 }

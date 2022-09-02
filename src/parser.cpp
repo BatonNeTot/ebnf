@@ -19,7 +19,12 @@ namespace ebnf {
 		++assignOffset;
 
 		if (_source[assignPos - 1] == '$') {
-			_currentId.baseId = true;
+			_currentId.type = Ebnf::IdInfo::Type::Base;
+			--assignPos;
+		}
+
+		if (_source[assignPos - 1] == '~') {
+			_currentId.type = Ebnf::IdInfo::Type::Boilerplate;
 			--assignPos;
 		}
 

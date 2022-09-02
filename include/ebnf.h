@@ -39,39 +39,18 @@ namespace ebnf {
 				return *this;
 			}
 
-			std::string toStr(uint64_t padding = 0) const {
-				std::string str;
-				for (auto i = 0u; i < padding; ++i) {
-					str += ' ';
+			std::string toStr() const {
+				if (!value.empty()) {
+					return value;
 				}
-				auto body = id;
-				if (body.empty()) {
-					body = value;
-				}
-				str += "\\-" + body + '\n';
-				for (auto& part : parts) {
-					str += part->toStr(padding += 2);
-				}
-				return str;
-			}
 
-			void compress(const Ebnf& ebnf) {
-				auto wouldntCompress = false;
+				std::string str;
+
 				for (auto& part : parts) {
-					part->compress(ebnf);
-					auto it = ebnf._ids.find(part->id);
-					if ((it != ebnf._ids.end() && it->second.baseId) 
-						|| !part->parts.empty()) {
-						wouldntCompress = true;
-					}
+					str += part->toStr();
 				}
-				if (wouldntCompress) {
-					return;
-				}
-				for (auto& part : parts) {
-					value += part->value;
-				}
-				parts.clear();
+
+				return str;
 			}
 
 			std::string id;
@@ -119,20 +98,26 @@ namespace ebnf {
 			IdInfo(IdInfo&& other)
 				: id(std::move(other.id))
 				, tree(other.tree)
-				, baseId(other.baseId)
+				, type(other.type)
 				, _nodeHolder(std::move(other._nodeHolder)) {}
 
 			IdInfo& operator =(IdInfo&& other) {
 				id = std::move(other.id);
 				tree = other.tree;
-				baseId = other.baseId;
+				type = other.type;
 				_nodeHolder = std::move(other._nodeHolder);
 				return *this;
 			}
 
 			std::string id;
 			Node* tree = nullptr;
-			bool baseId = false;
+
+			enum class Type : uint8_t {
+				Default,
+				Base,
+				Boilerplate
+			};
+			Type type = Type::Default;
 
 		private:
 			friend Parser;
@@ -147,6 +132,11 @@ namespace ebnf {
 
 			std::list<std::unique_ptr<Node>> _nodeHolder;
 		};
+
+		IdInfo::Type getIdType(const std::string& id) const {
+			auto it = _ids.find(id);
+			return it != _ids.end() ? it->second.type : IdInfo::Type::Base;
+		}
 
 		Node* getById(const std::string& id) const {
 			auto it = _ids.find(id);

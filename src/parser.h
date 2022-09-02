@@ -49,11 +49,37 @@ namespace ebnf {
 					if (!pair.first) {
 						return pair;
 					}
-					Ebnf::Token token;
-					token.id = _id;
-					token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
 
-					return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
+					auto type = ebnf.getIdType(_id);
+					switch (type) {
+					case Ebnf::IdInfo::Type::Default: {
+						if (!pair.second.id.empty()) {
+							Ebnf::Token token;
+							token.id = _id;
+							token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
+
+							return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
+						}
+						else {
+							pair.second.id = _id;
+
+							return pair;
+						}
+					}
+					case Ebnf::IdInfo::Type::Base: {
+						pair.second.id = _id;
+						pair.second.value = pair.second.toStr();
+						pair.second.parts.clear();
+
+						return pair;
+					}
+					case Ebnf::IdInfo::Type::Boilerplate: {
+						return std::make_pair<bool, Ebnf::Token>(true, {});
+					}
+					default: {
+						return std::make_pair<bool, Ebnf::Token>(false, {});
+					}
+					}
 				}
 
 				if (str.length() >= _id.length() && _id == str.substr(0, _id.length())) {
@@ -170,7 +196,9 @@ namespace ebnf {
 					if (!pair.first) {
 						return pair;
 					}
-					token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
+					if (!pair.second.value.empty() || !pair.second.parts.empty()) {
+						token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
+					}
 				}
 
 				return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
@@ -312,7 +340,7 @@ namespace ebnf {
 				auto pair = value()->tryParse(ebnf, testStr);
 				if (pair.first) {
 					str = testStr;
-					return std::move(pair);
+					return pair;
 				}
 				return std::make_pair<bool, Ebnf::Token>(true, {});
 			}
