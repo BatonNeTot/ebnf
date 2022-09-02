@@ -9,6 +9,7 @@
 namespace ebnf {
 
 	class Parser;
+	class ExpParser;
 
 	class Ebnf {
 	public:
@@ -58,11 +59,12 @@ namespace ebnf {
 			std::vector<std::unique_ptr<Token>> parts;
 		};
 
-		std::pair<bool, Token> parseAs(const std::string& str, const std::string& id) const;
+		std::pair<bool, Token> parseAs(const std::string& str, const std::string& expression) const;
 
 	private:
 
 		friend Parser;
+		friend ExpParser;
 
 		class Node {
 		public:
@@ -121,6 +123,7 @@ namespace ebnf {
 
 		private:
 			friend Parser;
+			friend ExpParser;
 
 			template <class T, class... Args>
 			T* create(Args&&... args) {

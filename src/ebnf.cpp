@@ -1,6 +1,7 @@
 #include "ebnf.h"
 
 #include "parser.h"
+#include "exp_parser.h"
 
 namespace ebnf {
 
@@ -34,35 +35,13 @@ namespace ebnf {
 		return output;
 	}
 
-	std::pair<bool, Ebnf::Token> Ebnf::parseAs(const std::string& str, const std::string& id) const {
-		auto* node = getById(id);
-		if (node == nullptr) {
-			if (str == id) {
-				return std::make_pair<bool, Ebnf::Token>(true, {id, id});
-			}
-			else {
-				return std::make_pair<bool, Ebnf::Token>(false, {});
-			}
-		}
+	std::pair<bool, Ebnf::Token> Ebnf::parseAs(const std::string& str, const std::string& expression) const {
+		IdInfo info;
+		ExpParser expParser(info);
+		expParser.fillInfo(expression);
 
 		auto strView = std::string_view(str);
-		auto pair = node->tryParse(*this, strView);
-		if (!pair.first || !strView.empty()) {
-			return std::make_pair<bool, Ebnf::Token>(false, {});
-		}
-
-		if (!pair.second.id.empty()) {
-			Ebnf::Token token;
-			token.id = id;
-			token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
-
-			return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
-		}
-		else {
-			pair.second.id = id;
-
-			return pair;
-		}
+		return info.tree->tryParse(*this, strView);
 	}
 
 }
