@@ -25,17 +25,24 @@ namespace ebnf {
 			Token(const std::string & id_, const std::string & value_)
 				: id(id_)
 				, value(value_) {}
+			Token(uint64_t line_, uint64_t offset_)
+				: line(line_)
+				, offset(offset_) {}
 
 			Token(Token& token) = delete;
 			Token(const Token& token) = delete;
 			Token(Token&& token)
 				: id(std::move(token.id))
 				, value(std::move(token.value))
+				, line(token.line)
+				, offset(token.offset)
 				, parts(std::move(token.parts)) {}
 
 			Token& operator= (Token&& token) {
 				id = std::move(token.id);
 				value = std::move(token.value);
+				line = token.line;
+				offset = token.offset;
 				parts = std::move(token.parts);
 				return *this;
 			}
@@ -56,6 +63,8 @@ namespace ebnf {
 
 			std::string id;
 			std::string value;
+			uint64_t line = 0;
+			uint64_t offset = 0;
 			std::vector<std::unique_ptr<Token>> parts;
 		};
 
@@ -80,7 +89,7 @@ namespace ebnf {
 
 			virtual size_t generationWeight() const { return 1; }
 
-			virtual std::pair<bool, Token> tryParse(const Ebnf& ebnf, std::string_view& str) const = 0;
+			virtual std::pair<bool, Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const = 0;
 		protected:
 			static void setParent(Node* node, Node* parent) {
 				node->_parent = parent;

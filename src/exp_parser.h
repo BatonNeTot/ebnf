@@ -24,7 +24,16 @@ namespace ebnf {
 		class NodeId : public Ebnf::Node {
 		public:
 			NodeId(const std::string& id)
-				: _id(id) {}
+				: _id(id) {
+				std::string::size_type nextLinePos = 0;
+
+				std::string lineSeparator = "\n";
+				while ((nextLinePos = _id.find(lineSeparator, nextLinePos)) != std::string::npos) {
+					++_lineIncs;
+					nextLinePos += lineSeparator.length();
+					_offset = nextLinePos;
+				}
+			}
 
 			std::string toStr() const override {
 				return _id;
@@ -40,10 +49,10 @@ namespace ebnf {
 				stack.emplace(node);
 			}
 
-			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
+			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
 				auto* node = getById(ebnf, _id);
 				if (node != nullptr) {
-					auto pair = node->tryParse(ebnf, str);
+					auto pair = node->tryParse(ebnf, str, line, offset);
 					if (!pair.first) {
 						return pair;
 					}
@@ -54,6 +63,8 @@ namespace ebnf {
 						if (!pair.second.id.empty()) {
 							Ebnf::Token token;
 							token.id = _id;
+							token.line = pair.second.line;
+							token.offset = pair.second.offset;
 							token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
 
 							return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
@@ -72,10 +83,10 @@ namespace ebnf {
 						return pair;
 					}
 					case Ebnf::IdInfo::Type::Boilerplate: {
-						return std::make_pair<bool, Ebnf::Token>(true, {});
+						return std::make_pair<bool, Ebnf::Token>(true, { pair.second.line, pair.second.offset });
 					}
 					default: {
-						return std::make_pair<bool, Ebnf::Token>(false, {});
+						return std::make_pair<bool, Ebnf::Token>(false, { line, offset });
 					}
 					}
 				}
@@ -85,17 +96,49 @@ namespace ebnf {
 					return std::make_pair<bool, Ebnf::Token>(true, { _id, _id });
 				}
 				else {
-					return std::make_pair<bool, Ebnf::Token>(false, {});
+					return std::make_pair<bool, Ebnf::Token>(false, { line, offset });
 				}
+				std::pair<bool, Ebnf::Token> pair;
+				if (str.length() >= _id.length() && _id == str.substr(0, _id.length())) {
+					str = str.substr(_id.length());
+					pair = std::make_pair<bool, Ebnf::Token>(true, { _id, _id });
+
+					pair.second.line = line;
+					pair.second.offset = offset;
+
+					line += _lineIncs;
+					if (_lineIncs > 0) {
+						offset = _offset;
+					}
+					else {
+						offset += _id.length();
+					}
+				}
+				else {
+					pair = std::make_pair<bool, Ebnf::Token>(false, { line, offset });
+				}
+
+				return pair;
 			}
 		private:
 			std::string _id;
+			uint64_t _lineIncs = 0;
+			uint64_t _offset = 0;
 		};
 
 		class NodeLiteral : public Ebnf::Node {
 		public:
 			NodeLiteral(const std::string& value)
-				: _value(value) {}
+				: _value(value) {
+				std::string::size_type nextLinePos = 0;
+
+				std::string lineSeparator = "\n";
+				while ((nextLinePos = _value.find(lineSeparator, nextLinePos)) != std::string::npos) {
+					++_lineIncs;
+					nextLinePos += lineSeparator.length();
+					_offset = nextLinePos;
+				}
+			}
 
 			std::string toStr() const override {
 				return '\'' + _value + '\'';
@@ -105,17 +148,33 @@ namespace ebnf {
 				output += _value;
 			}
 
-			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
+			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
+				std::pair<bool, Ebnf::Token> pair;
 				if (str.length() >= _value.length() && _value == str.substr(0, _value.length())) {
 					str = str.substr(_value.length());
-					return std::make_pair<bool, Ebnf::Token>(true, { _value });
+					pair = std::make_pair<bool, Ebnf::Token>(true, { _value });
+
+					pair.second.line = line;
+					pair.second.offset = offset;
+
+					line += _lineIncs;
+					if (_lineIncs > 0) {
+						offset = _offset;
+					}
+					else {
+						offset += _value.length();
+					}
 				}
 				else {
-					return std::make_pair<bool, Ebnf::Token>(false, {});
+					pair = std::make_pair<bool, Ebnf::Token>(false, { line, offset });
 				}
+
+				return pair;
 			}
 		private:
 			std::string _value;
+			uint64_t _lineIncs = 0;
+			uint64_t _offset = 0;
 		};
 
 		class NodeHolder : public Ebnf::Node {
@@ -186,11 +245,11 @@ namespace ebnf {
 				}
 			}
 
-			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
-				Ebnf::Token token;
+			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
+				Ebnf::Token token(line, offset);
 
 				for (auto& child : children()) {
-					auto pair = child->tryParse(ebnf, str);
+					auto pair = child->tryParse(ebnf, str, line, offset);
 					if (!pair.first) {
 						return pair;
 					}
@@ -199,6 +258,10 @@ namespace ebnf {
 					}
 				}
 
+				if (!token.parts.empty()) {
+					token.line = token.parts.front()->line;
+					token.offset = token.parts.front()->offset;
+				}
 				return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
 			}
 		};
@@ -236,25 +299,37 @@ namespace ebnf {
 				return totalWeight;
 			}
 
-			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
-				Ebnf::Token token;
+			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
+				Ebnf::Token token(line, offset);
 				std::string_view testStr;
 				std::string_view outputStr = str;
+				uint64_t tempLine = line;
+				auto outputLine = line;
+				uint64_t tempOffset = offset;
+				auto outputOffset = offset;
 				bool success = false;
 
 				for (auto& child : children()) {
 					testStr = str;
-					auto pair = child->tryParse(ebnf, testStr);
+					tempLine = line;
+					tempOffset = offset;
+					auto pair = child->tryParse(ebnf, testStr, tempLine, tempOffset);
 					if (pair.first) {
-						if (!success || testStr.length() < outputStr.length()) {
-							success = true;
+						success = true;
+					}
+					if ((!success || pair.first) && testStr.length() < outputStr.length()) {
+						if (pair.first) {
 							outputStr = testStr;
-							token = std::move(pair.second);
+							outputLine = tempLine;
+							outputOffset = tempOffset;
 						}
+						token = std::move(pair.second);
 					}
 				}
 
 				str = outputStr;
+				line = outputLine;
+				offset = outputOffset;
 				return std::make_pair<bool, Ebnf::Token>(std::move(success), std::move(token));
 			}
 		};
@@ -307,12 +382,12 @@ namespace ebnf {
 				}
 			}
 
-			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
+			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
 				if (value() == nullptr) {
-					return std::make_pair<bool, Ebnf::Token>(true, {});
+					return std::make_pair<bool, Ebnf::Token>(true, { line, offset });
 				}
 
-				return value()->tryParse(ebnf, str);
+				return value()->tryParse(ebnf, str, line, offset);
 			}
 		};
 
@@ -329,18 +404,18 @@ namespace ebnf {
 				}
 			}
 
-			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
+			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
 				if (value() == nullptr) {
-					return std::make_pair<bool, Ebnf::Token>(true, {});
+					return std::make_pair<bool, Ebnf::Token>(true, { line, offset });
 				}
 
 				auto testStr = str;
-				auto pair = value()->tryParse(ebnf, testStr);
+				auto pair = value()->tryParse(ebnf, testStr, line, offset);
 				if (pair.first) {
 					str = testStr;
 					return pair;
 				}
-				return std::make_pair<bool, Ebnf::Token>(true, {});
+				return std::make_pair<bool, Ebnf::Token>(true, { line, offset });
 			}
 		};
 
@@ -357,8 +432,8 @@ namespace ebnf {
 				}
 			}
 
-			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str) const override {
-				Ebnf::Token token;
+			std::pair<bool, Ebnf::Token> tryParse(const Ebnf& ebnf, std::string_view& str, uint64_t& line, uint64_t& offset) const override {
+				Ebnf::Token token(line, offset);
 
 				if (value() == nullptr) {
 					return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
@@ -366,7 +441,7 @@ namespace ebnf {
 
 				auto testStr = str;
 				while (true) {
-					auto pair = value()->tryParse(ebnf, testStr);
+					auto pair = value()->tryParse(ebnf, testStr, line, offset);
 					if (pair.first) {
 						str = testStr;
 						token.parts.emplace_back(std::make_unique<Ebnf::Token>(std::move(pair.second)));
@@ -374,6 +449,11 @@ namespace ebnf {
 					else {
 						break;
 					}
+				}
+
+				if (!token.parts.empty()) {
+					token.line = token.parts.front()->line;
+					token.offset = token.parts.front()->offset;
 				}
 				return std::make_pair<bool, Ebnf::Token>(true, std::move(token));
 			}

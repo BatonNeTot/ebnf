@@ -10,8 +10,10 @@ namespace ebnf {
 
 		while (parser.hasNext()) {
 			auto info = parser.proceedNext();
-			auto id = info.id;
-			_ids.try_emplace(id, std::move(info));
+			auto& id = info.id;
+			if (!id.empty()) {
+				_ids.try_emplace(id, std::move(info));
+			}
 		}
 	}
 
@@ -41,7 +43,9 @@ namespace ebnf {
 		expParser.fillInfo(expression);
 
 		auto strView = std::string_view(str);
-		return info.tree->tryParse(*this, strView);
+		uint64_t line = 0;
+		uint64_t offset = 0;
+		return info.tree->tryParse(*this, strView, line, offset);
 	}
 
 }

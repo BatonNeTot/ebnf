@@ -110,7 +110,12 @@ namespace ebnf {
 	}
 
 	bool ExpLexer::isSpace(char symbol) {
-		return symbol == ' ';
+		return symbol == ' '
+			|| symbol == '\f'
+			|| symbol == '\n'
+			|| symbol == '\r'
+			|| symbol == '\t'
+			|| symbol == '\v';
 	}
 
 	bool ExpLexer::isOr(char symbol) {
