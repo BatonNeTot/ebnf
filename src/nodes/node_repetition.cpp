@@ -14,7 +14,7 @@ namespace ebnf {
 		return (after == nullptr || after->childIndex + 2 < state.value) ? value() : nullptr;
 	}
 
-	NodeState NodeRepetition::incrementState(NodeState initialState, const Node* failedNode) const {
-		return isDeepChild(failedNode) ? 0 : initialState + 1;
+	NodeState NodeRepetition::incrementState(const StateInfo& initialState, const StateInfo* failedNode) const {
+		return isDeepChild(initialState, failedNode) ? 0 : initialState.value + 1;
 	}
 }

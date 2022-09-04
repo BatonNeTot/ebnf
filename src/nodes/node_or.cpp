@@ -14,8 +14,8 @@ namespace ebnf {
 		return after == nullptr ? children()[state.value - 1] : nullptr;
 	}
 
-	NodeState NodeOr::incrementState(NodeState initialState, const Node*) const {
-		auto state = initialState + 1;
+	NodeState NodeOr::incrementState(const StateInfo& initialState, const StateInfo*) const {
+		auto state = initialState.value + 1;
 		return state <= children().size() ? state : 0;
 	}
 }

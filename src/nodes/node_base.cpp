@@ -6,6 +6,10 @@ namespace ebnf {
 		return true;
 	}
 
+	std::unique_ptr<Token> NodeHolder::token(const Ebnf&, const SourceInfo&) const {
+		return std::make_unique<Token>();
+	}
+
 
 	void NodeContainer::insert(Node* node) {
 		add(node);

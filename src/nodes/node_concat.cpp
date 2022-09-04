@@ -24,8 +24,4 @@ namespace ebnf {
 
 		return nullptr;
 	}
-
-	NodeState NodeConcat::incrementState(NodeState initialState, const Node*) const {
-		return initialState == 0 ? 1 : 0;
-	}
 }

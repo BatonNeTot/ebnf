@@ -13,8 +13,4 @@ namespace ebnf {
 
 		return after == nullptr ? value() : nullptr;
 	}
-
-	NodeState NodeBrackets::incrementState(NodeState initialState, const Node*) const {
-		return initialState == 0 ? 1 : 0;
-	}
 }

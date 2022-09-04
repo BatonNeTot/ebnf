@@ -27,13 +27,19 @@ namespace ebnf {
 		return iterator.generate(incrementChance);
 	}
 
-	std::pair<bool, Token> Ebnf::parseAs(const std::string& str, const std::string& expression) const {
+	std::pair<bool, Token> Ebnf::parseAs(const std::string& str, const std::string& expression, ParsingType type) const {
 		IdInfo info;
 		EbnfExpParser expParser(info);
 		expParser.fillInfo(expression);
 
 		Parser iterator(*this, info);
-		return iterator.parse(str);
+		switch (type) {
+		case ParsingType::Incremental: 
+			return iterator.parseIncremental(str);
+		case ParsingType::Greedy:
+			return iterator.parseGreedy(str);
+		}
+		return std::make_pair<bool, Token>(false, {});
 	}
 
 }

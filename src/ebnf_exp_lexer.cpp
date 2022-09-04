@@ -204,7 +204,7 @@ namespace ebnf {
 	}
 
 	bool EbnfExpLexer::finishToken() {
-		auto output = !_token.value.empty();
+		auto output = !_token.value.empty() || _state == State::Literal;
 		if (output) {
 			_state = State::Default;
 		}

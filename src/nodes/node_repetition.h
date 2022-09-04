@@ -11,7 +11,7 @@ namespace ebnf {
 
 		Node* nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const override;
 
-		NodeState incrementState(NodeState state, const Node* failedNode) const override;
+		NodeState incrementState(const StateInfo& state, const StateInfo* failedNode) const override;
 	};
 }
 

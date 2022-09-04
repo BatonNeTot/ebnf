@@ -29,10 +29,6 @@ namespace ebnf {
 		return after == nullptr ? node : nullptr;
 	}
 
-	NodeState NodeId::incrementState(NodeState initialState, const Node*) const {
-		return initialState == 0 ? 1 : 0;
-	}
-
 	bool NodeId::updateStr(const Ebnf& ebnf, SourceInfo& source) const {
 		if (node(ebnf) != nullptr) {
 			return true;

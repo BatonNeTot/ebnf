@@ -14,8 +14,8 @@ namespace ebnf {
 		return after == nullptr ? value() : nullptr;
 	}
 
-	NodeState NodeConditional::incrementState(NodeState initialState, const Node*) const {
-		auto state = initialState + 1;
+	NodeState NodeConditional::incrementState(const StateInfo& initialState, const StateInfo*) const {
+		auto state = initialState.value + 1;
 		return state <= 2 ? state : 0;
 	}
 }

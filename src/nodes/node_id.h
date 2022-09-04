@@ -13,8 +13,6 @@ namespace ebnf {
 
 		Node* nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const override;
 
-		NodeState incrementState(NodeState initialState, const Node* failedNode) const override;
-
 		bool updateStr(const Ebnf& ebnf, SourceInfo& source) const override;
 
 		const std::string& body(const Ebnf&) const override;

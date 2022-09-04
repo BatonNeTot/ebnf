@@ -12,6 +12,8 @@ namespace ebnf {
 		virtual Node* pop() = 0;
 
 		bool updateStr(const Ebnf& ebnf, SourceInfo& source) const override;
+
+		std::unique_ptr<Token> token(const Ebnf&, const SourceInfo&) const override;
 	};
 
 	class NodeContainer : public NodeHolder {

@@ -10,8 +10,6 @@ namespace ebnf {
 		std::string toStr() const override;
 
 		Node* nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const override;
-
-		NodeState incrementState(NodeState initialState, const Node* failedNode) const override;
 	};
 }
 
