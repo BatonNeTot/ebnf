@@ -1,42 +1,23 @@
 #ifndef parser_h
 #define parser_h
 
-#include "ebnf.h"
-
-#include <string>
-#include <stack>
-#include <vector>
-#include <list>
-#include <memory>
+#include "ebnf/ebnf.h"
 
 namespace ebnf {
 
-	class Parser {
+	class Parser{
 	public:
 
-		Parser(const std::string& source)
-			: _source(source) {}
+		Parser(const Ebnf& ebnf, Ebnf::IdInfo& info);
 
-		Ebnf::IdInfo proceedNext();
-		bool hasNext() const;
+		std::pair<bool, Token> parse(const std::string& str) const;
+
+		std::string generate(float incrementChance) const;
 
 	private:
-
-		inline Ebnf::IdInfo&& destroyAndReturn() {
-			return std::move(_currentId);
-		}
-
-		bool throwError(const std::string& message = "");
-
-		std::string _source;
-		uint64_t _carret = 0;
-
-		Ebnf::IdInfo _currentId;
-
-		bool _errorFlag = false;
-		std::string _errorMsg;
+		const Ebnf& _ebnf;
+		Ebnf::IdInfo& _info;
 	};
-
 }
 
 #endif // !parser_h

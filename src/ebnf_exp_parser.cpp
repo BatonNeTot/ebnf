@@ -1,42 +1,52 @@
-#include "exp_parser.h"
+#include "ebnf_exp_parser.h"
 
-#include "exp_lexer.h"
+#include  "nodes/node_id.h"
+#include  "nodes/node_literal.h"
+
+#include  "nodes/node_concat.h"
+#include  "nodes/node_or.h"
+
+#include  "nodes/node_brackets.h"
+#include  "nodes/node_conditional.h"
+#include  "nodes/node_repetition.h"
+
+#include "ebnf_exp_lexer.h"
 
 #include <list>
 
 namespace ebnf {
 
-	size_t ExpParser::fillInfo(const std::string_view& expression) {
+	size_t EbnfExpParser::fillInfo(const std::string_view& expression) {
 		_lastNode = nullptr;
 		_lastHolder = nullptr;
 
-		ExpLexer lexer(expression);
+		EbnfExpLexer lexer(expression);
 
-		std::list<ExpLexer::Token> tokens;
+		std::list<EbnfExpLexer::Token> tokens;
 		while (lexer.hasNext()) {
 			auto token = lexer.proceedNext();
 			tokens.emplace_back(token);
 
 			switch (token.type) {
-			case ExpLexer::Token::Type::Id: {
+			case EbnfExpLexer::Token::Type::Id: {
 				auto node = create<NodeId>(token.value);
 				proceedNode(node);
 				_lastNode = node;
 				break;
 			}
-			case ExpLexer::Token::Type::Literal: {
+			case EbnfExpLexer::Token::Type::Literal: {
 				auto node = create<NodeLiteral>(token.value);
 				proceedNode(node);
 				_lastNode = node;
 				break;
 			}
-			case ExpLexer::Token::Type::Or: {
+			case EbnfExpLexer::Token::Type::Or: {
 				if (!_lastNode) {
 					throwError("Unexpected or operator");
 					return 0;
 				}
 
-				Ebnf::Node* holder;
+				Node* holder;
 				if (!_lastNode->parent()) {
 					auto node = create<NodeOr>();
 					node->add(_lastNode);
@@ -69,15 +79,15 @@ namespace ebnf {
 				_lastNode = nullptr;
 				break;
 			}
-			case ExpLexer::Token::Type::LeftBracket: {
+			case EbnfExpLexer::Token::Type::LeftBracket: {
 				_brackets.emplace(Bracket::Regular);
-				auto node = create<NodeBracket>();
+				auto node = create<NodeBrackets>();
 				proceedNode(node);
 				_lastHolder = node;
 				_lastNode = nullptr;
 				break;
 			}
-			case ExpLexer::Token::Type::RightBracket: {
+			case EbnfExpLexer::Token::Type::RightBracket: {
 				if (_lastHolder || _brackets.top() != Bracket::Regular) {
 					throwError("Unexpected closing bracket");
 					return 0;
@@ -99,7 +109,7 @@ namespace ebnf {
 
 				break;
 			}
-			case ExpLexer::Token::Type::LeftSquareBracket: {
+			case EbnfExpLexer::Token::Type::LeftSquareBracket: {
 				_brackets.emplace(Bracket::Square);
 				auto node = create<NodeConditional>();
 				proceedNode(node);
@@ -107,7 +117,7 @@ namespace ebnf {
 				_lastNode = nullptr;
 				break;
 			}
-			case ExpLexer::Token::Type::RightSquareBracket: {
+			case EbnfExpLexer::Token::Type::RightSquareBracket: {
 				if (_lastHolder || _brackets.top() != Bracket::Square) {
 					throwError("Unexpected closing square bracket");
 					return 0;
@@ -124,7 +134,7 @@ namespace ebnf {
 
 				break;
 			}
-			case ExpLexer::Token::Type::LeftCurlyBracket: {
+			case EbnfExpLexer::Token::Type::LeftCurlyBracket: {
 				_brackets.emplace(Bracket::Curly);
 				auto node = create<NodeRepetition>();
 				proceedNode(node);
@@ -132,7 +142,7 @@ namespace ebnf {
 				_lastNode = nullptr;
 				break;
 			}
-			case ExpLexer::Token::Type::RightCurlyBracket: {
+			case EbnfExpLexer::Token::Type::RightCurlyBracket: {
 				if (_lastHolder || _brackets.top() != Bracket::Curly) {
 					throwError("Unexpected closing curly bracket");
 					return 0;
@@ -155,7 +165,7 @@ namespace ebnf {
 		return lexer.carret();
 	}
 
-	void ExpParser::proceedNode(Ebnf::Node* node) {
+	void EbnfExpParser::proceedNode(Node* node) {
 		if (!_lastNode) {
 			if (!_info.tree) {
 				_info.tree = node;
@@ -186,7 +196,7 @@ namespace ebnf {
 		}
 	}
 
-	bool ExpParser::throwError(const std::string& message /*= ""*/) {
+	bool EbnfExpParser::throwError(const std::string& message /*= ""*/) {
 		_errorFlag = true;
 		_errorMsg = message;
 		return true;

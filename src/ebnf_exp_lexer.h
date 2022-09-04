@@ -1,14 +1,14 @@
-#ifndef exp_lexer_h
-#define exp_lexer_h
+#ifndef ebnf_exp_lexer_h
+#define ebnf_exp_lexer_h
 
 #include <string>
 
 namespace ebnf {
 
-	class ExpLexer {
+	class EbnfExpLexer {
 	public:
 
-		ExpLexer(const std::string_view& source)
+		EbnfExpLexer(const std::string_view& source)
 			: _source(source) {}
 
 		struct Token {
@@ -93,4 +93,4 @@ namespace ebnf {
 
 }
 
-#endif // !exp_lexer_h
+#endif // !ebnf_exp_lexer_h

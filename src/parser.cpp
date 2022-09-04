@@ -1,69 +1,85 @@
 #include "parser.h"
 
-#include "exp_parser.h"
-
-#include <list>
-
 namespace ebnf {
 
-	Ebnf::IdInfo Parser::proceedNext() {
-		_currentId = Ebnf::IdInfo();
+	Parser::Parser(const Ebnf& ebnf, Ebnf::IdInfo& info)
+		: _ebnf(ebnf), _info(info) {}
 
-		static const std::string spaceCharacters = " \f\n\r\t\v";
-		_carret = _source.find_first_not_of(spaceCharacters, _carret);
+	std::pair<bool, Token> Parser::parse(const std::string& str) const {
+		StateStack stack;
 
-		if (_carret == std::string::npos) {
-			return destroyAndReturn();
+		SourceInfo mostSuccessfulSource(str);
+
+		stack.push(_info.tree, str);
+
+		while (!stack.empty()) {
+			auto& state = stack.top();
+			auto newState = state.node->incrementState(state.value, nullptr);
+			if (newState != 0) {
+				state.value = newState;
+				SourceInfo lastSource = stack.top().source;
+				auto success = state.node->updateStr(_ebnf, lastSource);
+				if (success) {
+					if (lastSource.str.size() < mostSuccessfulSource.str.size()) {
+						mostSuccessfulSource = lastSource;
+					}
+					StateInfo* nextParentState = nullptr;
+					auto* next = state.node->next(_ebnf, state, nextParentState);
+					if (next != nullptr) {
+						auto childIndex = nextParentState == state.parent ? state.childIndex + 1 : 0;
+						stack.push(next, nextParentState, childIndex, lastSource);
+						continue;
+					}
+
+					if (lastSource.str.empty()) {
+						break;
+					}
+				}
+			}
+
+			stack.pop();
 		}
 
-		auto assignOffset = _source.find('=', _carret);
-		auto assignPos = assignOffset;
-		if (assignPos == std::string::npos) {
-			throwError("Couldn't find assignment operator");
-			return destroyAndReturn();
+		if (!stack.empty()) {
+			return std::make_pair<bool, Token>(true, stack.buildTokens(_ebnf));
 		}
-
-		++assignOffset;
-
-		if (_source[assignPos - 1] == '$') {
-			_currentId.type = Ebnf::IdInfo::Type::Base;
-			--assignPos;
+		else {
+			return std::make_pair<bool, Token>(false, Token(mostSuccessfulSource.line, mostSuccessfulSource.offset));
 		}
-
-		if (_source[assignPos - 1] == '~') {
-			_currentId.type = Ebnf::IdInfo::Type::Boilerplate;
-			--assignPos;
-		}
-
-		auto rightTrimmedId = _source.find_last_not_of(spaceCharacters, assignPos - 1) + 1;
-		_currentId.id = _source.substr(_carret, rightTrimmedId - _carret);
-
-		if (_currentId.id.empty()) {
-			throwError("Empty declared id");
-			return destroyAndReturn();
-		}
-
-		if (_currentId.id.find_first_of(spaceCharacters) != std::string::npos) {
-			throwError("Id contains space");
-			return destroyAndReturn();
-		}
-
-		auto expression = std::string_view(_source).substr(assignOffset);
-		ExpParser expParser(_currentId);
-		auto expSize = expParser.fillInfo(expression);
-		_carret = assignOffset + expSize + 1;
-
-		return destroyAndReturn();
 	}
 
-	bool Parser::hasNext() const {
-		return _source.length() > _carret;
+	static float randDouble() {
+		auto rand = static_cast<float>(::rand());
+		return rand / RAND_MAX;
 	}
 
-	bool Parser::throwError(const std::string& message /*= ""*/) {
-		_errorFlag = true;
-		_errorMsg = message;
-		return true;
+	std::string Parser::generate(float incrementChance) const {
+		StateStack stack;
+
+		std::string output;
+
+		stack.push(_info.tree);
+
+		while (true) {
+			auto& state = stack.top();
+			auto newState = state.node->incrementState(state.value, nullptr);
+			do {
+				state.value = newState;
+				newState = state.node->incrementState(state.value, nullptr);
+			} while (newState != 0 && randDouble() < incrementChance);
+
+			output += state.node->body(_ebnf);
+
+			StateInfo* nextParentState = nullptr;
+			auto* next = state.node->next(_ebnf, state, nextParentState);
+
+			if (next == nullptr) {
+				return output;
+			}
+
+			auto childIndex = nextParentState == state.parent ? state.childIndex + 1 : 0;
+			stack.push(next, nextParentState, childIndex);
+		}
 	}
 
 }

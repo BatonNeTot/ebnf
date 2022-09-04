@@ -1,8 +1,8 @@
-#include "exp_lexer.h"
+#include "ebnf_exp_lexer.h"
 
 namespace ebnf {
 
-	ExpLexer::Token ExpLexer::proceedNext() {
+	EbnfExpLexer::Token EbnfExpLexer::proceedNext() {
 		char itSymbol;
 		do {
 			itSymbol = nextSymbol();
@@ -17,11 +17,11 @@ namespace ebnf {
 		return token;
 	}
 
-	bool ExpLexer::hasNext() const {
+	bool EbnfExpLexer::hasNext() const {
 		return _source.length() > _carret && (_state == State::Literal || !isExpEnd(_source[_carret]));
 	}
 
-	char ExpLexer::nextSymbol() {
+	char EbnfExpLexer::nextSymbol() {
 		if (!hasNext()) {
 			throwError("Unexpected end of a string");
 			return '\0';
@@ -29,7 +29,7 @@ namespace ebnf {
 		return _source.at(_carret++);
 	}
 
-	bool ExpLexer::proceedSymbol(char symbol) {
+	bool EbnfExpLexer::proceedSymbol(char symbol) {
 		switch (_state) {
 		case State::Default:
 			return proceedDefault(symbol);
@@ -42,7 +42,7 @@ namespace ebnf {
 		}
 	}
 
-	bool ExpLexer::proceedDefault(char symbol) {
+	bool EbnfExpLexer::proceedDefault(char symbol) {
 		if (isSpace(symbol)) {
 			return false;
 		}
@@ -65,7 +65,7 @@ namespace ebnf {
 		}
 	}
 
-	bool ExpLexer::proceedId(char symbol) {
+	bool EbnfExpLexer::proceedId(char symbol) {
 		if (isSpace(symbol)) {
 			return finishToken();
 		}
@@ -96,7 +96,7 @@ namespace ebnf {
 
 		return false;
 	}
-	bool ExpLexer::proceedLiteral(char symbol) {
+	bool EbnfExpLexer::proceedLiteral(char symbol) {
 		if (isQuote(symbol)) {
 			return finishToken();
 		}
@@ -105,11 +105,11 @@ namespace ebnf {
 		return false;
 	}
 
-	bool ExpLexer::isExpEnd(char symbol) {
+	bool EbnfExpLexer::isExpEnd(char symbol) {
 		return symbol == '.';
 	}
 
-	bool ExpLexer::isSpace(char symbol) {
+	bool EbnfExpLexer::isSpace(char symbol) {
 		return symbol == ' '
 			|| symbol == '\f'
 			|| symbol == '\n'
@@ -118,45 +118,45 @@ namespace ebnf {
 			|| symbol == '\v';
 	}
 
-	bool ExpLexer::isOr(char symbol) {
+	bool EbnfExpLexer::isOr(char symbol) {
 		return symbol == '|';
 	}
 
-	bool ExpLexer::isLeftBracket(char symbol) {
+	bool EbnfExpLexer::isLeftBracket(char symbol) {
 		return symbol == '(';
 	}
-	bool ExpLexer::isRightBracket(char symbol) {
+	bool EbnfExpLexer::isRightBracket(char symbol) {
 		return symbol == ')';
 	}
-	bool ExpLexer::isLeftSquareBracket(char symbol) {
+	bool EbnfExpLexer::isLeftSquareBracket(char symbol) {
 		return symbol == '[';
 	}
-	bool ExpLexer::isRightSquareBracket(char symbol) {
+	bool EbnfExpLexer::isRightSquareBracket(char symbol) {
 		return symbol == ']';
 	}
-	bool ExpLexer::isLeftCurlyBracket(char symbol) {
+	bool EbnfExpLexer::isLeftCurlyBracket(char symbol) {
 		return symbol == '{';
 	}
-	bool ExpLexer::isRightCurlyBracket(char symbol) {
+	bool EbnfExpLexer::isRightCurlyBracket(char symbol) {
 		return symbol == '}';
 	}
 
-	bool ExpLexer::isQuote(char symbol) {
+	bool EbnfExpLexer::isQuote(char symbol) {
 		return symbol == '\'' || symbol == '"';
 	}
 
-	bool ExpLexer::isProperIdSymbol(char symbol) {
+	bool EbnfExpLexer::isProperIdSymbol(char symbol) {
 		return isProperStartingIdSymbol(symbol)
 			|| symbol == '-'
 			|| (symbol >= '0' && symbol <= '9');
 	}
-	bool ExpLexer::isProperStartingIdSymbol(char symbol) {
+	bool EbnfExpLexer::isProperStartingIdSymbol(char symbol) {
 		return symbol == '_'
 			|| (symbol >= 'a' && symbol <= 'z')
 			|| (symbol >= 'A' && symbol <= 'Z');
 	}
 
-	ExpLexer::Token::Type ExpLexer::decideTokenType(char symbol) {
+	EbnfExpLexer::Token::Type EbnfExpLexer::decideTokenType(char symbol) {
 		if (isProperStartingIdSymbol(symbol)) {
 			return Token::Type::Id;
 		}
@@ -190,12 +190,12 @@ namespace ebnf {
 		return Token::Type::Id;
 	}
 
-	bool ExpLexer::backspaceCarret() {
+	bool EbnfExpLexer::backspaceCarret() {
 		--_carret;
 		return finishToken();
 	}
 
-	bool ExpLexer::finishToken() {
+	bool EbnfExpLexer::finishToken() {
 		auto output = !_token.value.empty();
 		if (output) {
 			_state = State::Default;
@@ -203,7 +203,7 @@ namespace ebnf {
 		return output;
 	}
 
-	bool ExpLexer::throwError(const std::string& message /*= ""*/) {
+	bool EbnfExpLexer::throwError(const std::string& message /*= ""*/) {
 		_errorFlag = true;
 		_errorMsg = message;
 		return true;

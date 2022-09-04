@@ -7,19 +7,21 @@
 #include <cassert>
 #include <typeindex>
 
-#include "parser.h"
-#include "ebnf.h"
+#include "ebnf/ebnf.h"
 
 int main(int argc, char** argv) {
 
 	ebnf::Ebnf form(
-		"start='1'|'12'."
-		"end='23'."
+		"start~={'1'}."
+		"end='13'."
 		"total=start end."
 	);
 
-	auto [success, token] = form.parseAs("123", "total"); //TODO
-	std::cout << std::boolalpha << success << " " << token.toStr() << std::endl;
+	auto [success, token] = form.parseAs("113", "total");
+	token.compress(form);
+	std::cout << std::boolalpha << success << ": " << token.toStr() << std::endl;
+	std::string randomForm = "end total start";
+	std::cout << randomForm << ": " << form.generateFor(randomForm, 0.75f) << std::endl;
 
 	getc(stdin);
 	return 0;

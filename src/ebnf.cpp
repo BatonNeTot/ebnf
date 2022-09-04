@@ -1,12 +1,13 @@
-#include "ebnf.h"
+#include "ebnf/ebnf.h"
 
+#include "ebnf_parser.h"
+#include "ebnf_exp_parser.h"
 #include "parser.h"
-#include "exp_parser.h"
 
 namespace ebnf {
 
 	Ebnf::Ebnf(const std::string& source) {
-		Parser parser(source);
+		EbnfParser parser(source);
 
 		while (parser.hasNext()) {
 			auto info = parser.proceedNext();
@@ -17,35 +18,22 @@ namespace ebnf {
 		}
 	}
 
-	std::string Ebnf::generateFor(const std::string& id) const {
-		auto* root = getById(id);
-		if (root == nullptr) {
-			return id;
-		}
-
-		std::string output;
-		std::stack<Node*> stack;
-
-		stack.emplace(root);
-
-		while (!stack.empty()) {
-			auto* node = stack.top();
-			stack.pop();
-			node->generate(*this, output, stack);
-		}
-
-		return output;
-	}
-
-	std::pair<bool, Ebnf::Token> Ebnf::parseAs(const std::string& str, const std::string& expression) const {
+	std::string Ebnf::generateFor(const std::string& expression, float incrementChance) const {
 		IdInfo info;
-		ExpParser expParser(info);
+		EbnfExpParser expParser(info);
 		expParser.fillInfo(expression);
 
-		auto strView = std::string_view(str);
-		uint64_t line = 0;
-		uint64_t offset = 0;
-		return info.tree->tryParse(*this, strView, line, offset);
+		Parser iterator(*this, info);
+		return iterator.generate(incrementChance);
+	}
+
+	std::pair<bool, Token> Ebnf::parseAs(const std::string& str, const std::string& expression) const {
+		IdInfo info;
+		EbnfExpParser expParser(info);
+		expParser.fillInfo(expression);
+
+		Parser iterator(*this, info);
+		return iterator.parse(str);
 	}
 
 }
