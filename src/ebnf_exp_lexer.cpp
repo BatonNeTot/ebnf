@@ -72,6 +72,7 @@ namespace ebnf {
 
 		if (isQuote(symbol)
 			|| isOr(symbol)
+			|| isAny(symbol)
 			|| isLeftBracket(symbol)
 			|| isRightBracket(symbol)
 			|| isLeftSquareBracket(symbol)
@@ -122,6 +123,10 @@ namespace ebnf {
 		return symbol == '|';
 	}
 
+	bool EbnfExpLexer::isAny(char symbol) {
+		return symbol == '*';
+	}
+
 	bool EbnfExpLexer::isLeftBracket(char symbol) {
 		return symbol == '(';
 	}
@@ -165,6 +170,9 @@ namespace ebnf {
 		}
 		if (isOr(symbol)) {
 			return Token::Type::Or;
+		}
+		if (isAny(symbol)) {
+			return Token::Type::Any;
 		}
 
 		if (isLeftBracket(symbol)) {

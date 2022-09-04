@@ -45,7 +45,7 @@ namespace ebnf {
 		return node(ebnf) == nullptr ? value() : Node::body(ebnf);
 	}
 
-	std::unique_ptr<Token> NodeId::token(const Ebnf& ebnf) const {
+	std::unique_ptr<Token> NodeId::token(const Ebnf& ebnf, const SourceInfo&) const {
 		if (node(ebnf)) {
 			auto token = std::make_unique<Token>();
 			token->id = value();

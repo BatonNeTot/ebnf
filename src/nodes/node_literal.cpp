@@ -6,7 +6,7 @@ namespace ebnf {
 		: _value(value) {
 		std::string::size_type nextLinePos = 0;
 
-		std::string lineSeparator = "\n";
+		static std::string lineSeparator = "\n";
 		while ((nextLinePos = _value.find(lineSeparator, nextLinePos)) != std::string::npos) {
 			++_lineIncs;
 			nextLinePos += lineSeparator.length();
@@ -42,7 +42,7 @@ namespace ebnf {
 		return _value;
 	}
 
-	std::unique_ptr<Token> NodeLiteral::token(const Ebnf&) const {
+	std::unique_ptr<Token> NodeLiteral::token(const Ebnf&, const SourceInfo&) const {
 		return std::make_unique<Token>(_value);
 	}
 }

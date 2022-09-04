@@ -12,7 +12,7 @@
 int main(int argc, char** argv) {
 
 	ebnf::Ebnf form(
-		"start~={'1'}."
+		"start={*}."
 		"end='13'."
 		"total=start end."
 	);

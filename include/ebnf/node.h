@@ -98,7 +98,7 @@ namespace ebnf {
 
 		virtual const std::string& body(const Ebnf&) const { static std::string empty; return empty; }
 
-		virtual std::unique_ptr<Token> token(const Ebnf&) const { return std::make_unique<Token>(); }
+		virtual std::unique_ptr<Token> token(const Ebnf&, const SourceInfo&) const { return std::make_unique<Token>(); }
 
 		bool isDeepChild(const Node* child) const {
 			if (child == nullptr) {

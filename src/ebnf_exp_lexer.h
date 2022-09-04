@@ -16,6 +16,7 @@ namespace ebnf {
 			enum class Type : uint8_t {
 				Id,
 				Literal,
+				Any,
 				Or,
 				LeftBracket,
 				RightBracket,
@@ -64,6 +65,8 @@ namespace ebnf {
 		static bool isProperStartingIdSymbol(char symbol);
 
 		static bool isSpace(char symbol);
+
+		static bool isAny(char symbol);
 
 		static bool isOr(char symbol);
 

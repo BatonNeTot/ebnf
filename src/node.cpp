@@ -39,14 +39,14 @@ namespace ebnf {
 
 		for (auto& state : _stack) {
 			if (state.parent == nullptr) {
-				auto rootPtr = state.node->token(ebnf);
+				auto rootPtr = state.node->token(ebnf, state.source);
 				root = std::move(*rootPtr);
 				state.token = &root;
 				continue;
 			}
 
 			auto& token = state.parent->token->parts
-				.emplace_back(state.node->token(ebnf));
+				.emplace_back(state.node->token(ebnf, state.source));
 			state.token = token.get();
 		}
 

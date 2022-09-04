@@ -1,14 +1,15 @@
 #include "ebnf_exp_parser.h"
 
-#include  "nodes/node_id.h"
-#include  "nodes/node_literal.h"
+#include "nodes/node_id.h"
+#include "nodes/node_literal.h"
+#include "nodes/node_any.h"
 
-#include  "nodes/node_concat.h"
-#include  "nodes/node_or.h"
+#include "nodes/node_concat.h"
+#include "nodes/node_or.h"
 
-#include  "nodes/node_brackets.h"
-#include  "nodes/node_conditional.h"
-#include  "nodes/node_repetition.h"
+#include "nodes/node_brackets.h"
+#include "nodes/node_conditional.h"
+#include "nodes/node_repetition.h"
 
 #include "ebnf_exp_lexer.h"
 
@@ -36,6 +37,12 @@ namespace ebnf {
 			}
 			case EbnfExpLexer::Token::Type::Literal: {
 				auto node = create<NodeLiteral>(token.value);
+				proceedNode(node);
+				_lastNode = node;
+				break;
+			}
+			case EbnfExpLexer::Token::Type::Any: {
+				auto node = create<NodeAny>();
 				proceedNode(node);
 				_lastNode = node;
 				break;

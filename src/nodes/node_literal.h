@@ -20,7 +20,7 @@ namespace ebnf {
 
 		const std::string& body(const Ebnf& ebnf) const override;
 
-		std::unique_ptr<Token> token(const Ebnf& ebnf) const override;
+		std::unique_ptr<Token> token(const Ebnf& ebnf, const SourceInfo&) const override;
 
 		inline const std::string& value() const { return _value; }
 
