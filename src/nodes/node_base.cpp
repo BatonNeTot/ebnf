@@ -2,11 +2,11 @@
 
 namespace ebnf {
 
-	bool NodeHolder::updateStr(const Ebnf& ebnf, SourceInfo& source) const {
+	bool NodeHolder::updateStr(std::string_view& source) const {
 		return true;
 	}
 
-	std::unique_ptr<Token> NodeHolder::token(const Ebnf&, const SourceInfo&) const {
+	std::unique_ptr<Token> NodeHolder::token(const std::string_view&) const {
 		return std::make_unique<Token>();
 	}
 

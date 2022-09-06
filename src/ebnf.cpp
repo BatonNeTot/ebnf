@@ -16,12 +16,17 @@ namespace ebnf {
 				_ids.try_emplace(id, std::move(info));
 			}
 		}
+
+		for (auto& pair : _ids) {
+			pair.second.fetch(*this);
+		}
 	}
 
 	std::string Ebnf::generateFor(const std::string& expression, float incrementChance) const {
 		IdInfo info;
 		EbnfExpParser expParser(info);
 		expParser.fillInfo(expression);
+		info.fetch(*this);
 
 		Parser iterator(*this, info);
 		return iterator.generate(incrementChance);
@@ -31,6 +36,7 @@ namespace ebnf {
 		IdInfo info;
 		EbnfExpParser expParser(info);
 		expParser.fillInfo(expression);
+		info.fetch(*this);
 
 		Parser iterator(*this, info);
 		switch (type) {

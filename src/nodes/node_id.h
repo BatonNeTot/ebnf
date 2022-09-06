@@ -11,19 +11,23 @@ namespace ebnf {
 
 		std::string toStr() const override;
 
-		Node* nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const override;
+		Node* nextChild(const StateInfo& state) const override;
 
-		bool updateStr(const Ebnf& ebnf, SourceInfo& source) const override;
+		bool updateStr(std::string_view& source) const override;
 
-		const std::string& body(const Ebnf&) const override;
+		const std::string& body() const override;
 
-		std::unique_ptr<Token> token(const Ebnf& ebnf, const SourceInfo&) const override;
+		std::unique_ptr<Token> token(const std::string_view&) const override;
+
+		bool readyForFailerCache(const StateInfo& state, const FailerCache& cache) const override;
+
+		void fetch(const Ebnf& ebnf) override;
 
 	private:
 
-		Node* node(const Ebnf& ebnf) const;
+		Node* node() const;
 
-		mutable Node* _node = nullptr;
+		Node* _node = nullptr;
 	};
 }
 

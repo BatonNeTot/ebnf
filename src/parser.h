@@ -19,14 +19,12 @@ namespace ebnf {
 	private:
 
 		bool parseIncrementalStep(StateInfo& state, StateStack& stack, 
-			Cache& cache, SourceInfo& mostSuccessfulSource, StateInfo*& failedNode) const;
+			FailerCache& cache, std::string_view& mostSuccessfulSource) const;
 
-		void recordFailerCache(StateInfo& state, Cache& cache) const;
-
-		void recordSuccessCache(StateInfo& state, StateInfo& nextParentState, Cache& cache, const SourceInfo& source) const;
+		bool tryRecordFailerCache(StateInfo& state, FailerCache& cache) const;
 
 		bool pushNext(Node* next, StateInfo* nextParentState, StateInfo& state, StateStack& stack, 
-			Cache& cache, SourceInfo nextSource) const;
+			FailerCache& cache, std::string_view nextSource) const;
 
 		const Ebnf& _ebnf;
 		Ebnf::IdInfo& _info;

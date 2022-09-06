@@ -6,16 +6,30 @@ namespace ebnf {
 		return NodeContainer::toStr('|');
 	}
 
-	Node* NodeOr::nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const {
+	Node* NodeOr::nextChild(const StateInfo& state) const {
 		if (state.value == 0) {
 			return nullptr;
 		}
 
-		return after == nullptr ? children()[state.value - 1] : nullptr;
+		return state.nextChildIndex == 0 ? children()[state.value - 1] : nullptr;
 	}
 
-	NodeState NodeOr::incrementState(const StateInfo& initialState, const StateInfo*) const {
+	NodeState NodeOr::incrementState(const StateInfo& initialState, const FailerCache&) const {
 		auto state = initialState.value + 1;
 		return state <= children().size() ? state : 0;
+	}
+
+	bool NodeOr::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {
+		if (state.value == 0) {
+			for (auto i = 1u; i <= children().size(); ++i) {
+				if (!cache.checkRecord(state.node, i, state.source)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		else {
+			return cache.checkRecord(children()[state.value - 1], 0, state.source);
+		}
 	}
 }

@@ -11,9 +11,9 @@ namespace ebnf {
 		virtual void insert(Node* node) = 0;
 		virtual Node* pop() = 0;
 
-		bool updateStr(const Ebnf& ebnf, SourceInfo& source) const override;
+		bool updateStr(std::string_view& source) const override;
 
-		std::unique_ptr<Token> token(const Ebnf&, const SourceInfo&) const override;
+		std::unique_ptr<Token> token(const std::string_view&) const override;
 	};
 
 	class NodeContainer : public NodeHolder {

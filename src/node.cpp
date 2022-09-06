@@ -4,27 +4,30 @@
 
 namespace ebnf {
 
-	const std::string SourceInfo::lineSeparator = "\n";
-
 	bool StateStack::empty() const {
 		return _top == _stack.end();
 	}
 
 	void StateStack::push(Node* node) {
-		push(node, nullptr, 0);
+		push(node, nullptr);
 	}
-	void StateStack::push(Node* node, StateInfo* parent, uint64_t childIndex) {
-		flush();
-		_stack.emplace_back(node, parent, childIndex);
-		_top = --_stack.end();
+	void StateStack::push(Node* node, StateInfo* parent) {
+		push(node, parent, {});
 	}
 
 	void StateStack::push(Node* node, std::string_view str) {
-		push(node, nullptr, 0, SourceInfo(str));
+		push(node, nullptr, str);
 	}
-	void StateStack::push(Node* node, StateInfo* parent, uint64_t childIndex, SourceInfo source) {
-		flush();
-		_stack.emplace_back(node, parent, childIndex, source);
+	void StateStack::push(Node* node, StateInfo* parent, std::string_view source) {
+		auto end = _stack.end();
+		if (_top != end) {
+			++_top;
+			if (_top != end) {
+				*_top = StateInfo(node, parent, std::move(source));
+				return;
+			}
+		}
+		_stack.emplace_back(node, parent, std::move(source));
 		_top = --_stack.end();
 	}
 
@@ -45,26 +48,20 @@ namespace ebnf {
 		}
 	}
 
-	void StateStack::flush() {
-		while (!_stack.empty() && (--_stack.end()) != _top) {
-			_stack.pop_back();
-		}
-	}
-
 	Token StateStack::buildTokens(const Ebnf& ebnf) {
 		Token root;
 
-		_stack.pop_back();
-		for (auto& state : _stack) {
+		for (auto it = _stack.begin(); it != _top; ++it) {
+			auto& state = *it;
 			if (state.parent == nullptr) {
-				auto rootPtr = state.node->token(ebnf, state.source);
+				auto rootPtr = state.node->token(state.source);
 				root = std::move(*rootPtr);
 				state.token = &root;
 				continue;
 			}
 
 			auto& token = state.parent->token->parts
-				.emplace_back(state.node->token(ebnf, state.source));
+				.emplace_back(state.node->token(state.source));
 			state.token = token.get();
 		}
 

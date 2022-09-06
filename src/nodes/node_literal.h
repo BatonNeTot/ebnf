@@ -12,19 +12,20 @@ namespace ebnf {
 
 		std::string toStr() const override;
 
-		Node* nextChild(const Ebnf& ebnf, const StateInfo&, const StateInfo*) const override;
+		Node* nextChild(const StateInfo&) const override;
 
-		bool updateStr(const Ebnf& ebnf, SourceInfo& source) const override;
+		bool updateStr(std::string_view& source) const override;
 
-		const std::string& body(const Ebnf& ebnf) const override;
+		const std::string& body() const override;
 
-		std::unique_ptr<Token> token(const Ebnf& ebnf, const SourceInfo&) const override;
+		std::unique_ptr<Token> token(const std::string_view&) const override;
+
+		bool readyForFailerCache(const StateInfo& state, const FailerCache& cache) const override;
 
 		inline const std::string& value() const { return _value; }
 
 	private:
 		std::string _value;
-		SourceInfo::CachedDiff _diff;
 	};
 }
 

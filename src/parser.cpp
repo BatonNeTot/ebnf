@@ -8,17 +8,15 @@ namespace ebnf {
 	std::pair<bool, Token> Parser::parseIncremental(const std::string& str) const {
 		StateStack stack;
 
-		Cache cache;
-		SourceInfo mostSuccessfulSource(str);
-		StateInfo* failedNode = nullptr;
+		FailerCache cache;
+		std::string_view mostSuccessfulSource(str);
 
 		stack.push(_info.tree, str);
 
 		while (!stack.empty() && stack.top().node != nullptr) {
 			auto& state = stack.top();
 
-			if (!parseIncrementalStep(state, stack, cache, mostSuccessfulSource, failedNode)) {
-				failedNode = &state;
+			if (!parseIncrementalStep(state, stack, cache, mostSuccessfulSource)) {
 				stack.pop();
 			}
 		}
@@ -27,76 +25,78 @@ namespace ebnf {
 			return std::make_pair<bool, Token>(true, stack.buildTokens(_ebnf));
 		}
 		else {
-			return std::make_pair<bool, Token>(false, Token(mostSuccessfulSource.line(), mostSuccessfulSource.offset()));
+			auto parsedSource = str.substr(0, str.length() - mostSuccessfulSource.length());
+			auto line = 0u;
+			auto offset = parsedSource.length();
+
+			{
+				static const std::string lineSeparator = "\n";
+				std::string::size_type nextLinePos = 0;
+
+				while ((nextLinePos = parsedSource.find(lineSeparator, nextLinePos)) != std::string::npos) {
+					++line;
+					nextLinePos += lineSeparator.length();
+					offset = parsedSource.length() - nextLinePos;
+				}
+			}
+
+			return std::make_pair<bool, Token>(false, Token(line, offset));
 		}
 	}
 
-	bool Parser::parseIncrementalStep(StateInfo& state, StateStack& stack, Cache& cache, SourceInfo& mostSuccessfulSource, StateInfo*& failedNode) const {
-		auto newState = state.node->incrementState(state, failedNode);
-		if (newState == 0) {
-			recordFailerCache(state, cache);
-			return false;
-		}
-
-		failedNode = nullptr;
-		state.value = newState;
-
-		if (state.node->isCacheable()) {
-			auto* record = cache.checkRecord(state.node, state.source);
-			if (record != nullptr) {
-				if (!record->success) {
-					return false;
-				}
-
-				StateInfo* nextParentState = nullptr;
-				auto* next = state.node->siblingOrNext(_ebnf, state, nextParentState);
-				return pushNext(next, nextParentState, state, stack, cache, record->source);
+	bool Parser::parseIncrementalStep(StateInfo& state, StateStack& stack, FailerCache& cache, std::string_view& mostSuccessfulSource) const {
+		state.value = state.node->incrementState(state, cache);
+		if (state.value == 0) {
+			if (tryRecordFailerCache(state, cache) && state.parent) {
+				tryRecordFailerCache(*state.parent, cache);
 			}
-		}
-
-		SourceInfo updatedSource = state.source;
-		auto success = state.node->updateStr(_ebnf, updatedSource);
-		if (!success) {
-			recordFailerCache(state, cache);
+			if (state.parent) {
+				--state.parent->nextChildIndex;
+			}
 			return false;
 		}
 
-		if (updatedSource.str().size() < mostSuccessfulSource.str().size()) {
+		state.nextChildIndex = 0;
+
+		if (cache.checkRecord(state.node, state.value, state.source)) {
+			return true;
+		}
+
+		std::string_view updatedSource = state.source;
+		auto success = state.node->updateStr(updatedSource);
+		if (!success) {
+			tryRecordFailerCache(state, cache);
+			return true;
+		}
+
+		if (updatedSource.length() < mostSuccessfulSource.length()) {
 			mostSuccessfulSource = updatedSource;
 		}
 
 		StateInfo* nextParentState = nullptr;
-		auto* next = state.node->next(_ebnf, state, nextParentState);
+		auto* next = state.node->next(state, nextParentState);
 		return pushNext(next, nextParentState, state, stack, cache, std::move(updatedSource));
 	}
 
-	void Parser::recordSuccessCache(StateInfo& state, StateInfo& nextParentState, Cache& cache, const SourceInfo& source) const {
-		StateInfo* itState = &state;
-		while (itState != &nextParentState) {
-			if (itState->node->isCacheable()) {
-				cache.recordSuccess(itState->node, itState->source, source);
-			}
-
-			itState = itState->parent;
+	bool Parser::tryRecordFailerCache(StateInfo& state, FailerCache& cache) const {
+		if (state.node->readyForFailerCache(state, cache)) {
+			//cache.record(state.node, state.value, state.source);
+			//return true;
 		}
+		return false;
 	}
 
-	void Parser::recordFailerCache(StateInfo& state, Cache& cache) const {
-		if (state.node->isCacheable()) {
-			cache.recordFailer(state.node, state.source);
-		}
-	}
-
-	bool Parser::pushNext(Node* next, StateInfo* nextParentState, StateInfo& state, StateStack& stack, Cache& cache, SourceInfo nextSource) const {
+	bool Parser::pushNext(Node* next, StateInfo* nextParentState, StateInfo& state, StateStack& stack, FailerCache& cache, std::string_view nextSource) const {
 		if (next != nullptr) {
-			recordSuccessCache(state, *nextParentState, cache, nextSource);
-
-			auto childIndex = nextParentState == state.parent ? state.childIndex + 1 : 0;
-			stack.push(next, nextParentState, childIndex, std::move(nextSource));
+			++nextParentState->nextChildIndex;
+			if (nextParentState->nextChildIndex > nextParentState->mostSuccessfulChild) {
+				nextParentState->mostSuccessfulChild = nextParentState->nextChildIndex;
+			}
+			stack.push(next, nextParentState, std::move(nextSource));
 			return true;
 		}
 
-		if (nextSource.str().empty()) {
+		if (nextSource.empty()) {
 			stack.push(nullptr);
 			return true;
 		}
@@ -116,29 +116,29 @@ namespace ebnf {
 	std::string Parser::generate(float incrementChance) const {
 		StateStack stack;
 
+		FailerCache cache;
 		std::string output;
 
 		stack.push(_info.tree);
 
 		while (true) {
 			auto& state = stack.top();
-			auto newState = state.node->incrementState(state, nullptr);
+			auto newState = state.node->incrementState(state, cache);
 			do {
 				state.value = newState;
-				newState = state.node->incrementState(state, nullptr);
+				newState = state.node->incrementState(state, cache);
 			} while (newState != 0 && randDouble() < incrementChance);
 
-			output += state.node->body(_ebnf);
+			output += state.node->body();
 
 			StateInfo* nextParentState = nullptr;
-			auto* next = state.node->next(_ebnf, state, nextParentState);
+			auto* next = state.node->next(state, nextParentState);
 
 			if (next == nullptr) {
 				return output;
 			}
 
-			auto childIndex = nextParentState == state.parent ? state.childIndex + 1 : 0;
-			stack.push(next, nextParentState, childIndex);
+			stack.push(next, nextParentState);
 		}
 	}
 

@@ -5,20 +5,20 @@ namespace ebnf {
 	NodeId::NodeId(const std::string& id)
 		: NodeLiteral(id) {}
 
-	Node* NodeId::node(const Ebnf& ebnf) const {
-		if (_node == nullptr) {
-			_node = getById(ebnf, value());
-		}
+	Node* NodeId::node() const {
 		return _node;
+	}
+
+	void NodeId::fetch(const Ebnf& ebnf) {
+		_node = getById(ebnf, value());
 	}
 
 	std::string NodeId::toStr() const {
 		return value();
 	}
 
-	Node* NodeId::nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const {
-		auto node = NodeId::node(ebnf);
-		if (node == nullptr) {
+	Node* NodeId::nextChild(const StateInfo& state) const {
+		if (node() == nullptr) {
 			return nullptr;
 		}
 
@@ -26,29 +26,38 @@ namespace ebnf {
 			return nullptr;
 		}
 
-		return after == nullptr ? node : nullptr;
+		return state.nextChildIndex == 0 ? node() : nullptr;
 	}
 
-	bool NodeId::updateStr(const Ebnf& ebnf, SourceInfo& source) const {
-		if (node(ebnf) != nullptr) {
+	bool NodeId::updateStr(std::string_view& source) const {
+		if (node() != nullptr) {
 			return true;
 		}
 
-		return NodeLiteral::updateStr(ebnf, source);
+		return NodeLiteral::updateStr(source);
 	}
 
-	const std::string& NodeId::body(const Ebnf& ebnf) const {
-		return node(ebnf) == nullptr ? value() : Node::body(ebnf);
+	const std::string& NodeId::body() const {
+		return node() == nullptr ? value() : Node::body();
 	}
 
-	std::unique_ptr<Token> NodeId::token(const Ebnf& ebnf, const SourceInfo&) const {
-		if (node(ebnf)) {
+	std::unique_ptr<Token> NodeId::token(const std::string_view&) const {
+		if (node()) {
 			auto token = std::make_unique<Token>();
 			token->id = value();
 			return token;
 		}
 		else {
 			return std::make_unique<Token>(value(), value());
+		}
+	}
+
+	bool NodeId::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {
+		if (state.value == 1) {
+			return _node == nullptr ? true : cache.checkRecord(_node, 0, state.source);
+		}
+		else {
+			return cache.checkRecord(state.node, 1, state.source);
 		}
 	}
 }

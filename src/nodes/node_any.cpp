@@ -6,13 +6,13 @@ namespace ebnf {
 		return "*";
 	}
 
-	Node* NodeAny::nextChild(const Ebnf& ebnf, const StateInfo&, const StateInfo*) const {
+	Node* NodeAny::nextChild(const StateInfo&) const {
 		return nullptr;
 	}
 
-	bool NodeAny::updateStr(const Ebnf& ebnf, SourceInfo& source) const {
-		if (source.str().length() >= 1) {
-			source.substruct(source.str()[0]);
+	bool NodeAny::updateStr(std::string_view& source) const {
+		if (source.length() >= 1) {
+			source = source.substr(1);
 			return true;
 		}
 		else {
@@ -20,13 +20,17 @@ namespace ebnf {
 		}
 	}
 
-	const std::string& NodeAny::body(const Ebnf&) const {
+	const std::string& NodeAny::body() const {
 		static std::string buffer(1, ' ');
 		buffer = static_cast<char>(rand());
 		return buffer;
 	}
 
-	std::unique_ptr<Token> NodeAny::token(const Ebnf&, const SourceInfo& source) const {
-		return std::make_unique<Token>(std::string(1, source.str()[0]));
+	std::unique_ptr<Token> NodeAny::token(const std::string_view& source) const {
+		return std::make_unique<Token>(std::string(1, source[0]));
+	}
+
+	bool NodeAny::readyForFailerCache(const StateInfo&, const FailerCache&) const {
+		return true;
 	}
 }

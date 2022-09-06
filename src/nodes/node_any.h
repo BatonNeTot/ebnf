@@ -9,13 +9,15 @@ namespace ebnf {
 	public:
 		std::string toStr() const override;
 
-		Node* nextChild(const Ebnf& ebnf, const StateInfo&, const StateInfo*) const override;
+		Node* nextChild(const StateInfo&) const override;
 
-		bool updateStr(const Ebnf& ebnf, SourceInfo& source) const override;
+		bool updateStr(std::string_view& source) const override;
 
-		const std::string& body(const Ebnf& ebnf) const override;
+		const std::string& body() const override;
 
-		std::unique_ptr<Token> token(const Ebnf& ebnf, const SourceInfo& source) const override;
+		std::unique_ptr<Token> token(const std::string_view& source) const override;
+
+		bool readyForFailerCache(const StateInfo& state, const FailerCache& cache) const override;
 	};
 }
 

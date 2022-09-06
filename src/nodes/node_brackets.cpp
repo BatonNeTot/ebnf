@@ -6,11 +6,15 @@ namespace ebnf {
 		return NodeSingle::toStr('(', ')');
 	}
 
-	Node* NodeBrackets::nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const {
+	Node* NodeBrackets::nextChild(const StateInfo& state) const {
 		if (state.value == 0) {
 			return nullptr;
 		}
 
-		return after == nullptr ? value() : nullptr;
+		return state.nextChildIndex == 0 ? value() : nullptr;
+	}
+
+	bool NodeBrackets::readyForFailerCache(const StateInfo&, const FailerCache&) const {
+		return true;
 	}
 }

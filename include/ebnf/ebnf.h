@@ -72,6 +72,12 @@ namespace ebnf {
 				return *this;
 			}
 
+			void fetch(const Ebnf& ebnf) {
+				for (auto& node : _nodeHolder) {
+					node->fetch(ebnf);
+				}
+			}
+
 			IdType type = IdType::Default;
 			std::string id;
 			Node* tree = nullptr;

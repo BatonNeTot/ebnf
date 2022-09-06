@@ -6,22 +6,20 @@ namespace ebnf {
 		return NodeContainer::toStr(' ');
 	}
 
-	Node* NodeConcat::nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const {
-		if (state.value == 0 || children().empty()) {
+	Node* NodeConcat::nextChild(const StateInfo& state) const {
+		if (state.value == 0) {
 			return nullptr;
 		}
 
-		if (after == nullptr) {
-			return children().front();
-		}
+		return children().size() > state.nextChildIndex ? children()[state.nextChildIndex] : nullptr;
+	}
 
-		for (auto it = children().cbegin(), end = children().cend(); it != end; ++it) {
-			if (*it == after->node) {
-				++it;
-				return it != end ? *it : nullptr;
-			}
+	bool NodeConcat::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {
+		if (state.value == 1) {
+			return cache.checkRecord(children().front(), 0, state.source);
 		}
-
-		return nullptr;
+		else {
+			return cache.checkRecord(state.node, 1, state.source);
+		}
 	}
 }

@@ -9,7 +9,9 @@ namespace ebnf {
 	public:
 		std::string toStr() const override;
 
-		Node* nextChild(const Ebnf& ebnf, const StateInfo& state, const StateInfo* after) const override;
+		Node* nextChild(const StateInfo& state) const override;
+
+		bool readyForFailerCache(const StateInfo& state, const FailerCache& cache) const override;
 	};
 }
 
