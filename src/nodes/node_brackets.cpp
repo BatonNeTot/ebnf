@@ -14,7 +14,12 @@ namespace ebnf {
 		return state.nextChildIndex == 0 ? value() : nullptr;
 	}
 
-	bool NodeBrackets::readyForFailerCache(const StateInfo&, const FailerCache&) const {
-		return true;
+	bool NodeBrackets::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {
+		if (state.value == 1) {
+			return cache.checkRecord(value(), 0, state.source);
+		}
+		else {
+			return cache.checkRecord(state.node, 1, state.source);
+		}
 	}
 }

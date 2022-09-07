@@ -1,5 +1,7 @@
 #include "parser.h"
 
+#include "nodes/node_or.h"
+
 namespace ebnf {
 
 	Parser::Parser(const Ebnf& ebnf, Ebnf::IdInfo& info)
@@ -80,8 +82,8 @@ namespace ebnf {
 
 	bool Parser::tryRecordFailerCache(StateInfo& state, FailerCache& cache) const {
 		if (state.node->readyForFailerCache(state, cache)) {
-			//cache.record(state.node, state.value, state.source);
-			//return true;
+			cache.record(state.node, state.value, state.source);
+			return true;
 		}
 		return false;
 	}

@@ -30,7 +30,12 @@ namespace ebnf {
 		return std::make_unique<Token>(std::string(1, source[0]));
 	}
 
-	bool NodeAny::readyForFailerCache(const StateInfo&, const FailerCache&) const {
-		return true;
+	bool NodeAny::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {
+		if (state.value == 1) {
+			return true;
+		}
+		else {
+			return cache.checkRecord(state.node, 1, state.source);
+		}
 	}
 }
