@@ -53,7 +53,7 @@ namespace ebnf {
 					return 0;
 				}
 
-				Node* holder;
+				NodeBase* holder;
 				if (!_lastNode->parent()) {
 					auto node = create<NodeOr>();
 					node->add(_lastNode);
@@ -172,7 +172,7 @@ namespace ebnf {
 		return lexer.carret();
 	}
 
-	void EbnfExpParser::proceedNode(Node* node) {
+	void EbnfExpParser::proceedNode(NodeBase* node) {
 		if (!_lastNode) {
 			if (!_info.tree) {
 				_info.tree = node;

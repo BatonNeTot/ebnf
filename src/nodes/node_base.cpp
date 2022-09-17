@@ -11,27 +11,27 @@ namespace ebnf {
 	}
 
 
-	void NodeContainer::insert(Node* node) {
+	void NodeContainer::insert(NodeBase* node) {
 		add(node);
 	}
 
-	void NodeContainer::add(Node* node) {
+	void NodeContainer::add(NodeBase* node) {
 		_children.emplace_back(node);
 		setParent(node, this);
 	}
 
-	Node* NodeContainer::pop() {
+	NodeBase* NodeContainer::pop() {
 		return popLast();
 	}
 
-	Node* NodeContainer::popLast() {
+	NodeBase* NodeContainer::popLast() {
 		auto* last = _children.back();
 		setParent(last, nullptr);
 		_children.pop_back();
 		return last;
 	}
 
-	const std::vector<Node*>& NodeContainer::children() const {
+	const std::vector<NodeBase*>& NodeContainer::children() const {
 		return _children;
 	}
 
@@ -48,11 +48,11 @@ namespace ebnf {
 	}
 
 
-	void NodeSingle::insert(Node* node) {
+	void NodeSingle::insert(NodeBase* node) {
 		value(node);
 	}
 
-	void NodeSingle::value(Node* node) {
+	void NodeSingle::value(NodeBase* node) {
 		if (_node) {
 			setParent(_node, nullptr);
 		}
@@ -63,13 +63,13 @@ namespace ebnf {
 		}
 	}
 
-	Node* NodeSingle::pop() {
+	NodeBase* NodeSingle::pop() {
 		auto output = value();
 		value(nullptr);
 		return output;
 	}
 
-	Node* NodeSingle::value() const {
+	NodeBase* NodeSingle::value() const {
 		return _node;
 	}
 	std::string NodeSingle::toStr(char left, char right) const {

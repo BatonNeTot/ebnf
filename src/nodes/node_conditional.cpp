@@ -14,9 +14,8 @@ namespace ebnf {
 		return state.nextChildIndex == 0 ? value() : nullptr;
 	}
 
-	NodeState NodeConditional::incrementState(const StateInfo& initialState, const FailerCache& cache) const {
-		auto state = initialState.value + 1;
-		return state <= 2 ? state : 0;
+	NodeState NodeConditional::maxState(const StateInfo&) const {
+		return 2;
 	}
 
 	bool NodeConditional::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {

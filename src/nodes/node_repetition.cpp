@@ -14,11 +14,8 @@ namespace ebnf {
 		return state.nextChildIndex + 1 < state.value ? value() : nullptr;
 	}
 
-	NodeState NodeRepetition::incrementState(const StateInfo& initialState, const FailerCache& cache) const {
-		if (initialState.value == 0 || initialState.value == 1) {
-			return initialState.value + 1;
-		}
-		return initialState.value == initialState.mostSuccessfulChild + 1 ? initialState.value + 1 : 0;
+	NodeState NodeRepetition::maxState(const StateInfo& state) const {
+		return state.mostSuccessfulChild + 2;
 	}
 
 	bool NodeRepetition::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {

@@ -47,8 +47,11 @@ namespace ebnf {
 	}
 
 	bool Parser::parseIncrementalStep(StateInfo& state, StateStack& stack, FailerCache& cache, std::string_view& mostSuccessfulSource) const {
-		state.value = state.node->incrementState(state, cache);
-		if (state.value == 0) {
+		auto maxState = state.node->maxState(state);
+		++state.value;
+		if (state.value > maxState) {
+			state.value = 0;
+
 			if (tryRecordFailerCache(state, cache) && state.parent) {
 				tryRecordFailerCache(*state.parent, cache);
 			}
@@ -77,7 +80,7 @@ namespace ebnf {
 
 		StateInfo* nextParentState = nullptr;
 		auto* next = state.node->next(state, nextParentState);
-		return pushNext(next, nextParentState, state, stack, cache, std::move(updatedSource));
+		return pushNext(next, nextParentState, stack, cache, std::move(updatedSource));
 	}
 
 	bool Parser::tryRecordFailerCache(StateInfo& state, FailerCache& cache) const {
@@ -88,7 +91,7 @@ namespace ebnf {
 		return false;
 	}
 
-	bool Parser::pushNext(Node* next, StateInfo* nextParentState, StateInfo& state, StateStack& stack, FailerCache& cache, std::string_view nextSource) const {
+	bool Parser::pushNext(Node* next, StateInfo* nextParentState, StateStack& stack, FailerCache& cache, std::string_view nextSource) const {
 		if (next != nullptr) {
 			++nextParentState->nextChildIndex;
 			if (nextParentState->nextChildIndex > nextParentState->mostSuccessfulChild) {
@@ -106,10 +109,6 @@ namespace ebnf {
 		return false;
 	}
 
-	std::pair<bool, Token> Parser::parseGreedy(const std::string& str) const {
-		return parseIncremental(str);
-	}
-
 	static float randDouble() {
 		auto rand = static_cast<float>(::rand());
 		return rand / RAND_MAX;
@@ -125,11 +124,12 @@ namespace ebnf {
 
 		while (true) {
 			auto& state = stack.top();
-			auto newState = state.node->incrementState(state, cache);
+			auto maxState = state.node->maxState(state);
+			auto newState = 1u;
 			do {
 				state.value = newState;
-				newState = state.node->incrementState(state, cache);
-			} while (newState != 0 && randDouble() < incrementChance);
+				++newState;
+			} while (newState <= maxState && randDouble() < incrementChance);
 
 			output += state.node->body();
 

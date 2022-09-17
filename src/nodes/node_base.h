@@ -5,10 +5,25 @@
 
 namespace ebnf {
 
-	class NodeHolder : public Node {
+	class NodeBase : public Node {
+	public:
+
+		NodeBase* parent() const {
+			return _parent;
+		}
+	protected:
+
+		static void setParent(NodeBase* node, NodeBase* parent) {
+			node->_parent = parent;
+		}
+	private:
+		NodeBase* _parent = nullptr;
+	};
+
+	class NodeHolder : public NodeBase {
 	public:
 		virtual ~NodeHolder() = default;
-		virtual void insert(Node* node) = 0;
+		virtual void insert(NodeBase* node) = 0;
 		virtual Node* pop() = 0;
 
 		bool updateStr(std::string_view& source) const override;
@@ -20,38 +35,38 @@ namespace ebnf {
 	public:
 		virtual ~NodeContainer() = default;
 
-		void insert(Node* node) override;
+		void insert(NodeBase* node) override;
 
-		void add(Node* node);
+		void add(NodeBase* node);
 
-		Node* pop() override;
+		NodeBase* pop() override;
 
-		Node* popLast();
+		NodeBase* popLast();
 
-		const std::vector<Node*>& children() const;
+		const std::vector<NodeBase*>& children() const;
 
 	protected:
 		std::string toStr(char separator) const;
 	private:
-		std::vector<Node*> _children;
+		std::vector<NodeBase*> _children;
 	};
 
 	class NodeSingle : public NodeHolder {
 	public:
 		virtual ~NodeSingle() = default;
 
-		void insert(Node* node) override;
+		void insert(NodeBase* node) override;
 
-		void value(Node* node);
+		void value(NodeBase* node);
 
-		Node* pop() override; 
+		NodeBase* pop() override;
 
-		Node* value() const;
+		NodeBase* value() const;
 
 	protected:
 		std::string toStr(char left, char right) const;
 	private:
-		Node* _node = nullptr;
+		NodeBase* _node = nullptr;
 	};
 }
 

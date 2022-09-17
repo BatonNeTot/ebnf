@@ -73,17 +73,13 @@ namespace ebnf {
 
 	private:
 
-		std::list<StateInfo> _stack;
+		std::deque<StateInfo> _stack;
 		decltype(_stack.begin()) _top = _stack.end();
 	};
 
 	class Node {
 	public:
 		virtual ~Node() = default;
-
-		Node* parent() const {
-			return _parent;
-		}
 
 		virtual std::string toStr() const = 0;
 
@@ -110,8 +106,8 @@ namespace ebnf {
 
 		virtual Node* nextChild(const StateInfo& state) const = 0;
 
-		virtual NodeState incrementState(const StateInfo& initialState, const FailerCache&) const {
-			return initialState.value == 0 ? 1 : 0;
+		virtual NodeState maxState(const StateInfo&) const {
+			return 1;
 		}
 
 		virtual bool updateStr(std::string_view& source) const = 0;
@@ -125,10 +121,6 @@ namespace ebnf {
 		virtual void fetch(const Ebnf&) {}
 
 	protected:
-
-		static void setParent(Node* node, Node* parent) {
-			node->_parent = parent;
-		}
 
 		static Node* getById(const Ebnf& ebnf, const std::string& id);
 	private:

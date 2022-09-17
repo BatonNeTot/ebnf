@@ -14,9 +14,8 @@ namespace ebnf {
 		return state.nextChildIndex == 0 ? children()[state.value - 1] : nullptr;
 	}
 
-	NodeState NodeOr::incrementState(const StateInfo& initialState, const FailerCache&) const {
-		auto state = initialState.value + 1;
-		return state <= children().size() ? state : 0;
+	NodeState NodeOr::maxState(const StateInfo&) const {
+		return children().size();
 	}
 
 	bool NodeOr::readyForFailerCache(const StateInfo& state, const FailerCache& cache) const {

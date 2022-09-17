@@ -1,12 +1,12 @@
 #ifndef node_literal_h
 #define node_literal_h
 
-#include "ebnf/node.h"
+#include "nodes/node_base.h"
 #include "ebnf/ebnf.h"
 
 namespace ebnf {
 
-	class NodeLiteral : public Node {
+	class NodeLiteral : public NodeBase {
 	public:
 		explicit NodeLiteral(const std::string& value);
 

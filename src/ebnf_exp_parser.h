@@ -1,7 +1,7 @@
 #ifndef ebnf_exp_parser_h
 #define ebnf_exp_parser_h
 
-#include "ebnf/node.h"
+#include "nodes/node_base.h"
 #include "ebnf/ebnf.h"
 
 #include <string>
@@ -30,15 +30,15 @@ namespace ebnf {
 			return _info.create<T>(std::forward<Args>(args)...);
 		}
 
-		void proceedNode(Node* node);
+		void proceedNode(NodeBase* node);
 
 		bool throwError(const std::string& message = "");
 
 		std::stack<Bracket> _brackets;
 
 		Ebnf::IdInfo& _info;
-		Node* _lastNode = nullptr;
-		Node* _lastHolder = nullptr;
+		NodeBase* _lastNode = nullptr;
+		NodeBase* _lastHolder = nullptr;
 
 		bool _errorFlag = false;
 		std::string _errorMsg;

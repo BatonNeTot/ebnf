@@ -5,7 +5,7 @@
 
 namespace ebnf {
 
-	class NodeAny : public Node {
+	class NodeAny : public NodeBase {
 	public:
 		std::string toStr() const override;
 

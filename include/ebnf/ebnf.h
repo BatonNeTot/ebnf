@@ -17,11 +17,6 @@ namespace ebnf {
 
 	class Node;
 
-	enum class ParsingType {
-		Incremental,
-		Greedy
-	};
-
 	class Ebnf {
 	public:
 
@@ -29,7 +24,7 @@ namespace ebnf {
 
 		std::string generateFor(const std::string& expression, float incrementChance) const;
 
-		std::pair<bool, Token> parseAs(const std::string& str, const std::string& expression, ParsingType type = ParsingType::Incremental) const;
+		std::pair<bool, Token> parseAs(const std::string& str, const std::string& expression) const;
 
 		Node* getById(const std::string& id) const {
 			auto it = _ids.find(id);

@@ -11,7 +11,7 @@ namespace ebnf {
 
 		Node* nextChild(const StateInfo& state) const override;
 
-		NodeState incrementState(const StateInfo& initialState, const FailerCache& cache) const override;
+		NodeState maxState(const StateInfo& state) const override;
 
 		bool readyForFailerCache(const StateInfo& state, const FailerCache& cache) const override;
 	};

@@ -12,8 +12,6 @@ namespace ebnf {
 
 		std::pair<bool, Token> parseIncremental(const std::string& str) const;
 
-		std::pair<bool, Token> parseGreedy(const std::string& str) const;
-
 		std::string generate(float incrementChance) const;
 
 	private:
@@ -23,7 +21,7 @@ namespace ebnf {
 
 		bool tryRecordFailerCache(StateInfo& state, FailerCache& cache) const;
 
-		bool pushNext(Node* next, StateInfo* nextParentState, StateInfo& state, StateStack& stack, 
+		bool pushNext(Node* next, StateInfo* nextParentState, StateStack& stack, 
 			FailerCache& cache, std::string_view nextSource) const;
 
 		const Ebnf& _ebnf;

@@ -25,8 +25,6 @@ namespace ebnf {
 
 		void compress(const Ebnf& ebnf);
 
-		void fetch(const Ebnf& ebnf);
-
 		std::string id;
 		std::string value;
 		uint64_t line = 0;
